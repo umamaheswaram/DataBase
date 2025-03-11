@@ -1,0 +1,127 @@
+DROP DATABASE IF EXISTS RGM;
+CREATE DATABASE IF NOT EXISTS RGM;
+USE RGM;
+
+-- Creating Department Table
+CREATE TABLE IF NOT EXISTS DEPARTMENT(
+ID INT NOT NULL primary key auto_increment,
+name varchar(255) not null
+);
+
+-- creating Employee table
+CREATE TABLE IF NOT exists employee(
+ID INT NOT NULL PRIMARY KEY auto_increment,
+NAME varchar(255) NOT NULL,
+EMAIL varchar(255) unique,
+ADDRESS TEXT,
+DOJ DATE NOT NULL,
+SALARY INT NOT NULL, 
+QUALIFICATION TEXT NOT NULL, 
+DEPARTMENT_ID INT NOT NULL, 
+EXPERIENCE INT NOT NULL, 
+FOREIGN KEY (DEPARTMENT_ID) REFERENCES DEPARTMENT(ID) ON DELETE CASCADE
+);
+
+-- Creating Users Table
+CREATE TABLE IF NOT EXISTS USERS(
+EMPLOYEE_ID INT NOT NULL PRIMARY KEY,
+USERNAME VARCHAR(100) NOT NULL,
+PASSWORD TEXT NOT NULL,
+ADDRESS timestamp NOT NULL default current_timestamp,
+foreign key (EMPLOYEE_ID) references EMPLOYEE(ID)
+);
+
+-- Creating Student Table
+CREATE TABLE IF NOT EXISTS STUDENT(
+id INT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+    NAME VARCHAR(100) NOT NULL, 
+    EMAIL VARCHAR(250), 
+    ADDRESS TEXT, 
+    DEPARTMENT_ID INT NOT NULL,
+    FOREIGN KEY (DEPARTMENT_ID) REFERENCES DEPARTMENT(ID) ON DELETE CASCADE
+);
+
+-- Creating Book Table
+CREATE TABLE IF NOT EXISTS Book (
+    ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT, 
+    TITLE VARCHAR(100) NOT NULL, 
+    AUTHOR VARCHAR(250), 
+    PRICE INT NOT NULL, 
+    AVAIBLE TINYINT NOT NULL DEFAULT 1, 
+    EDITION TEXT NOT NULL, 
+    ADDEDBY INT NOT NULL, 
+    LOGTIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+    FOREIGN KEY (ADDEDBY) REFERENCES EMPLOYEE(ID) ON DELETE CASCADE
+);
+
+-- Create book_transactions table
+CREATE TABLE IF NOT EXISTS book_transactions (
+    STUDENT_ID INT NOT NULL, 
+    bOOK_ID INT NOT NULL, 
+    issuedDate DATE NOT NULL, 
+    returnDate DATE DEFAULT NULL, 
+    fine INT NOT NULL DEFAULT 0,
+	isLostOrDamaged BOOLEAN NOT NULL DEFAULT FALSE,
+    FOREIGN KEY (STUDENT_ID) REFERENCES STUDENT(ID) ON DELETE CASCADE, 
+    FOREIGN KEY (BOOK_ID) REFERENCES BOOK(ID) ON DELETE CASCADE
+);
+
+-- Create student_semister table
+CREATE TABLE IF NOT EXISTS Student_semisters (
+    ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    STUDENT_ID INT NOT NULL,
+    YEAR INT NOT NULL CHECK (year BETWEEN 1 AND 4),
+    SEMESTER INT NOT NULL CHECK (SEMESTER BETWEEN 1 AND 2),
+    FOREIGN KEY (STUDENT_ID) REFERENCES STUDENT(ID) ON DELETE CASCADE
+);
+
+-- Create index for student_semister table on id column
+CREATE INDEX Semister_id_idx ON Student_semisters(ID);
+
+-- Create student_marks table
+CREATE TABLE IF NOT EXISTS Student_marks (
+    ID INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    STUDENT_ID INT NOT NULL,
+    SEMESTER_ID INT NOT NULL,
+    FIRSTSUBJECT INT NOT NULL CHECK (firstSubject BETWEEN 0 AND 100),
+    SECONDSUBJECT INT NOT NULL CHECK (secondSubject BETWEEN 0 AND 100),
+    THIRDSUBJECT INT NOT NULL CHECK (thirdSubject BETWEEN 0 AND 100),
+    FOURTHSUBJECT INT NOT NULL CHECK (fourthSubject BETWEEN 0 AND 100),
+    FIFTHSUBJECT INT NOT NULL CHECK (fifthSubject BETWEEN 0 AND 100),
+    SIXTHSUBJECT INT NOT NULL CHECK (sixthSubject BETWEEN 0 AND 100),
+    FIRSTLAB INT NOT NULL CHECK (firstLab BETWEEN 0 AND 75),
+    SECONDLAB INT NOT NULL CHECK (secondLab BETWEEN 0 AND 75),
+    FOREIGN KEY (STUDENT_ID) REFERENCES STUDENT(ID) ON DELETE CASCADE,
+    FOREIGN KEY (SEMESTER_ID) REFERENCES Student_semisters(ID) ON DELETE CASCADE
+);
+
+-- Create index for student_marks table on id, studentId, semisterId columns
+CREATE INDEX student_semister_id_idx ON student_marks(ID, STUDENT_ID, SEMESTER_ID);
+
+-- Drop procedure if it exists
+DROP PROCEDURE IF EXISTS insert_book_transaction_if_eligible;
+DELIMITER //
+CREATE PROCEDURE Iinsert_book_transaction_if_eligible(
+IN STUDENT_ID INT,
+IN BOOK_ID INT,
+IN ISSUEEDDATE DATE
+)
+BEGIN
+	DECLARE CAN_BARROW BOOLEAN;
+    -- Check eligibility to borrow (make sure there are no books currently borrowed by the student)
+    SELECT COUNT(*) = 0 INTO CAN_BORROW
+    FROM BOOK_TRANSACTIONS
+    WHERE STUDENT_ID=STUDENT_ID
+    AND RETURNDATE IS NULL; -- Check if there are any unreturned books
+    -- If eligible, insert into book_transactions table
+    IF CAN_BORROW THEN
+		 -- Insert into book_transactions
+          INSERT INTO book_transactions (STUDENT_ID, BOOK_ID, issuedDate)
+			VALUES (STUDNET_ID, bOOK_ID, issuedDate);
+		 -- Return true indicating successful insertion
+        SELECT TRUE AS eligibility_status;
+    ELSE
+        -- Return false indicating not eligible
+        SELECT FALSE AS eligibility_status;
+    END IF;
+END;
