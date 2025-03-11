@@ -112,3 +112,102 @@ sales, ROUND(sales * 0.07 ,2) as tax,
 ROUND(sales+(sales*0.07)+4.99,2) as total_cost
 from orders
 LIMIT 10;
+
+
+
+/******************************************FIELDS*************************************************
+order_id	order_date	ship_date	ship_mode	customer_id 	customer_name	segment		country		city	subcategory		product_name	sales	quantity	discount	profit
+*******************************************************************************************/
+
+
+/*
+1. Write a query that includes order_id, product_name, sales, discount, and profit.
+2. Filter your results so that your query only shows records that have lost more than $1000.
+*/
+SELECT order_id, product_name, sales, discount, profit
+from orders
+WHERE
+profit<=-1000;
+
+/*
+1. Write a query that includes order_id, subcategory, product_name, and a calculated field aliased price_per_unit.
+2. Filter your query so you only see records with a price_per_unit less than $0.50.
+*/
+SELECT order_id, subcategory,product_name, 
+sales/quantity as price_per_unit
+from orders
+WHERE sales/quantity<=0.50;
+
+/*
+Write a query that returns the order_id, product_id, and a field that shows a 10% sales tax on sales, aliased as sales_tax.
+Get the records where the resulting sales tax is between 1 and 2 dollars.
+*/
+SELECT order_id, product_id, (sales/100)*10 as sales_tax
+from orders
+where (sales/100)*10 BETWEEN 1 and 2;
+
+/*
+1. Write a query that includes order_id, product_name, sales, and quantity from the orders table.
+2. Include only the following sales amounts:
+	3
+	14
+	15
+*/
+SELECT order_id,product_name,sales,quantity
+from orders
+where sales In(3,14,15)
+
+/*
+1. Write a query that identifies all missing values from the segment field.
+2. Include all fields.
+3. After you run your query, write an inline comment with any trends in the missing data.
+*/
+SELECT * from orders
+where segment is null or segment=' ';
+
+/*
+1. Write a query to select at least product_name and a calculated field aliased as price_per_unit that divides sales by quantity.
+2. Only select records in 'Storage' where the price per unit is more than $300.
+*/
+SELECT product_name, sales/quantity as price_per_unit 
+from orders
+WHERE subcategory='Storage' and
+sales/quantity>300
+
+/*
+1. Write a query that includes at least product_name, profit, and quantity.
+2. Apply a filter to select products with profits less than $0 or quantities equal to 1.
+*/
+SELECT product_name,profit, quantity
+from orders
+WHERE profit<0 OR quantity=1;
+
+
+
+/*
+invoice_id	customer_id	invoice_date	billing_country	total
+*/
+/*
+1. Write a query that displays the table above.
+	Use the clauses SELECT, FROM, and LIMIT.
+*/
+SELECT invoice_id, customer_id, invoice_date, billing_country,total from invoice
+LIMIT 3;
+
+/*
+1. Write a query that uses the SUM aggregate function to calculate the sum of all values in the total column from the invoice table.
+2. Rename the result as overall_sale.
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
